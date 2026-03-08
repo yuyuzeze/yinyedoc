@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网站详细架构图 — 前后端组件 & 数据流</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fafbfe;--card:#fff;--border:#e2e8f0;--shadow:rgba(0,0,0,.06);
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --red:#dc2626;--red-l:#fef2f2;--red-b:#fecaca;
+  --blue:#2563eb;--blue-l:#eff6ff;--blue-b:#bfdbfe;
+  --green:#16a34a;--green-l:#f0fdf4;--green-b:#bbf7d0;
+  --purple:#7c3aed;--purple-l:#f5f3ff;--purple-b:#ddd6fe;
+  --orange:#ea580c;--orange-l:#fff7ed;--orange-b:#fed7aa;
+  --teal:#0d9488;--teal-l:#f0fdfa;--teal-b:#99f6e4;
+  --yellow:#ca8a04;--yellow-l:#fefce8;--yellow-b:#fef08a;
+  --pink:#db2777;--pink-l:#fdf2f8;--pink-b:#fbcfe8;
+  --cyan:#0891b2;--cyan-l:#ecfeff;--cyan-b:#a5f3fc;
+  --indigo:#4f46e5;--indigo-l:#eef2ff;--indigo-b:#c7d2fe;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Noto Sans SC',sans-serif;color:var(--text);padding:20px;font-size:12px;}
+.page{max-width:1400px;margin:0 auto;}
+
+.hdr{text-align:center;padding:24px 0 20px;}
+.hdr h1{font-size:22px;font-weight:900;color:var(--text);}
+.hdr .sub{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:5px;}
+
+/* Zones */
+.zone{border:2px solid;border-radius:12px;padding:14px;margin-bottom:14px;position:relative;background:var(--card);box-shadow:0 1px 8px var(--shadow);}
+.zone-label{position:absolute;top:-10px;left:16px;font-size:10px;font-weight:700;padding:2px 12px;border-radius:4px;letter-spacing:.5px;color:#fff;}
+.zone-sub{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;position:absolute;top:-9px;right:16px;background:var(--card);padding:0 8px;}
+
+/* Grid */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.g6{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;}
+
+/* Module box */
+.mod{border:1.5px solid;border-radius:8px;padding:8px 10px;transition:all .15s;}
+.mod:hover{transform:translateY(-1px);box-shadow:0 3px 12px var(--shadow);}
+.mod .mt{font-size:11px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:4px;}
+.mod .md{font-size:9px;color:var(--text2);line-height:1.4;}
+.mod .mc{font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:3px;background:#f8fafc;padding:2px 6px;border-radius:3px;display:inline-block;}
+
+/* Shared badge */
+.badge{font-size:7px;padding:1px 5px;border-radius:8px;font-weight:700;letter-spacing:.3px;white-space:nowrap;}
+.badge-shared{background:#dcfce7;color:#166534;border:1px solid #bbf7d0;}
+.badge-individual{background:#fef3c7;color:#92400e;border:1px solid #fde68a;}
+.badge-core{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe;}
+
+/* Arrow flow */
+.flow{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;flex-wrap:wrap;}
+.flow-arrow{font-size:18px;color:var(--text3);}
+.flow-label{font-size:9px;font-family:'JetBrains Mono',monospace;padding:3px 10px;border-radius:10px;border:1px solid var(--border);background:#f8fafc;color:var(--text2);}
+
+/* Section header */
+.sec{display:flex;align-items:center;gap:8px;margin:6px 0 4px;padding-left:4px;}
+.sec-dot{width:8px;height:8px;border-radius:2px;}
+.sec-text{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.5px;}
+
+/* Big flow arrow between front and back */
+.big-flow{background:linear-gradient(135deg,var(--red-l),var(--blue-l));border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center;margin:10px 0;}
+.big-flow .bf-title{font-size:13px;font-weight:800;color:var(--indigo);}
+.big-flow .bf-detail{font-size:10px;color:var(--text2);margin-top:4px;font-family:'JetBrains Mono',monospace;}
+.big-flow .bf-note{font-size:9px;color:var(--green);margin-top:4px;font-weight:600;}
+
+/* Pipe connector */
+.pipe{display:flex;align-items:center;gap:6px;padding:4px 0;justify-content:center;}
+.pipe-line{flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--border) 0,var(--border) 6px,transparent 6px,transparent 12px);}
+.pipe-text{font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--text3);white-space:nowrap;padding:1px 8px;background:var(--card);border:1px solid var(--border);border-radius:6px;}
+
+@media(max-width:900px){.g2,.g3,.g4,.g5,.g6{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="hdr">
+  <h1>网站详细架构图 — 前后端组件 & 数据流</h1>
+  <div class="sub">Angular 18 + .NET 8 Web API + EF Core 8 + Azure SQL | IIS 子应用构成 | 共通 vs 独立组件</div>
+</div>
+
+<!-- Legend -->
+<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:16px;">
+  <span class="badge badge-shared" style="font-size:9px;padding:3px 10px;">🟢 共通组件 (Shared / Reusable)</span>
+  <span class="badge badge-individual" style="font-size:9px;padding:3px 10px;">🟡 业务独立组件 (Individual / Per-Module)</span>
+  <span class="badge badge-core" style="font-size:9px;padding:3px 10px;">🔵 框架核心 (Framework Core)</span>
+</div>
+
+<!-- ===== BROWSER ===== -->
+<div class="zone" style="border-color:var(--text3);background:#f8fafc;">
+  <div class="zone-label" style="background:#475569;">🌐 浏览器 (Browser)</div>
+  <div class="g4" style="margin-top:8px;">
+    <div class="mod" style="border-color:var(--border);">
+      <div class="mt">🖥️ Chrome / Edge</div>
+      <div class="md">用户通过 VPN 访问</div>
+      <div class="mc">https://system.gov.local</div>
+    </div>
+    <div class="mod" style="border-color:var(--border);">
+      <div class="mt">🔒 Session Storage</div>
+      <div class="md">JWT Token 临时存储</div>
+      <div class="mc">sessionStorage (非 localStorage)</div>
+    </div>
+    <div class="mod" style="border-color:var(--border);">
+      <div class="mt">🍪 Cookie</div>
+      <div class="md">Windows Auth NTLM Token</div>
+      <div class="mc">Same-Origin 自动发送</div>
+    </div>
+    <div class="mod" style="border-color:var(--border);">
+      <div class="mt">📦 Angular Bundle</div>
+      <div class="md">main.js + polyfills + styles + chunks</div>
+      <div class="mc">首次加载 ~400KB (gzip)</div>
+    </div>
+  </div>
+</div>
+
+<div class="flow">
+  <div class="flow-arrow">⬇</div>
+  <div class="flow-label">HTTP GET → IIS 返回 index.html + JS/CSS 静态文件</div>
+  <div class="flow-arrow">⬇</div>
+</div>
+
+<!-- ===== ANGULAR FRONTEND ===== -->
+<div class="zone" style="border-color:var(--red-b);background:var(--red-l);">
+  <div class="zone-label" style="background:var(--red);">🅰️ Angular 18 前端 (Frontend — IIS Root /)</div>
+  <div class="zone-sub">Pool_Frontend | No Managed Code | 纯静态文件</div>
+
+  <!-- Core Framework -->
+  <div class="sec" style="margin-top:10px;"><div class="sec-dot" style="background:var(--blue);"></div><div class="sec-text">框架核心 (Framework Core)</div></div>
+  <div class="g6">
+    <div class="mod" style="border-color:var(--blue-b);background:var(--blue-l);">
+      <div class="mt" style="color:var(--blue);">@angular/core <span class="badge badge-core">核心</span></div>
+      <div class="md">组件、DI、生命周期</div>
+    </div>
+    <div class="mod" style="border-color:var(--blue-b);background:var(--blue-l);">
+      <div class="mt" style="color:var(--blue);">@angular/router</div>
+      <div class="md">SPA 路由 + Lazy Load</div>
+    </div>
+    <div class="mod" style="border-color:var(--blue-b);background:var(--blue-l);">
+      <div class="mt" style="color:var(--blue);">@angular/forms</div>
+      <div class="md">Reactive Forms 表单</div>
+    </div>
+    <div class="mod" style="border-color:var(--blue-b);background:var(--blue-l);">
+      <div class="mt" style="color:var(--blue);">HttpClient</div>
+      <div class="md">REST API 通信</div>
+    </div>
+    <div class="mod" style="border-color:var(--blue-b);background:var(--blue-l);">
+      <div class="mt" style="color:var(--blue);">RxJS</div>
+      <div class="md">Observable 异步流</div>
+    </div>
+    <div class="mod" style="border-color:var(--blue-b);background:var(--blue-l);">
+      <div class="mt" style="color:var(--blue);">Material / CDK</div>
+      <div class="md">UI 组件库</div>
+    </div>
+  </div>
+
+  <!-- Shared Components -->
+  <div class="sec"><div class="sec-dot" style="background:var(--green);"></div><div class="sec-text">🟢 共通组件 (全业务模块共用)</div></div>
+  <div class="g5">
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">AuthInterceptor <span class="badge badge-shared">共通</span></div>
+      <div class="md">JWT Token 自动附加<br>401 → 跳转登录</div>
+    </div>
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">ErrorInterceptor <span class="badge badge-shared">共通</span></div>
+      <div class="md">全局错误捕获<br>统一 Toast 通知</div>
+    </div>
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">AuthGuard <span class="badge badge-shared">共通</span></div>
+      <div class="md">路由守卫<br>未登录禁止进入</div>
+    </div>
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">RoleGuard <span class="badge badge-shared">共通</span></div>
+      <div class="md">权限守卫<br>按角色控制页面</div>
+    </div>
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">LoadingInterceptor <span class="badge badge-shared">共通</span></div>
+      <div class="md">请求进度条<br>自动 loading 状态</div>
+    </div>
+  </div>
+  <div class="g5">
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">BaseListComponent <span class="badge badge-shared">共通</span></div>
+      <div class="md">列表页基类：分页、排序、搜索、导出</div>
+    </div>
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">BaseFormComponent <span class="badge badge-shared">共通</span></div>
+      <div class="md">表单页基类：校验、保存、提示</div>
+    </div>
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">ConfirmDialog <span class="badge badge-shared">共通</span></div>
+      <div class="md">确认弹窗、删除确认</div>
+    </div>
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">FileUploader <span class="badge badge-shared">共通</span></div>
+      <div class="md">文件上传组件<br>拖拽 + 进度条</div>
+    </div>
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">i18n Service <span class="badge badge-shared">共通</span></div>
+      <div class="md">多语言切换<br>ngx-translate</div>
+    </div>
+  </div>
+
+  <!-- Business Modules -->
+  <div class="sec"><div class="sec-dot" style="background:var(--yellow);"></div><div class="sec-text">🟡 业务功能模块 (Lazy Loaded — 各自独立开发)</div></div>
+  <div class="g4">
+    <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+      <div class="mt" style="color:var(--orange);">👤 员工管理 <span class="badge badge-individual">独立</span></div>
+      <div class="md">List / Edit / Detail 页面<br>各自的 Service / DTO / 路由</div>
+      <div class="mc">lazy: employees/</div>
+    </div>
+    <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+      <div class="mt" style="color:var(--orange);">🏢 部门管理 <span class="badge badge-individual">独立</span></div>
+      <div class="md">组织树、部门 CRUD</div>
+      <div class="mc">lazy: departments/</div>
+    </div>
+    <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+      <div class="mt" style="color:var(--orange);">📋 考勤管理 <span class="badge badge-individual">独立</span></div>
+      <div class="md">打卡记录、假勤申请</div>
+      <div class="mc">lazy: attendance/</div>
+    </div>
+    <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+      <div class="mt" style="color:var(--orange);">📊 报表中心 <span class="badge badge-individual">独立</span></div>
+      <div class="md">统计图表、Excel/PDF 导出</div>
+      <div class="mc">lazy: reports/</div>
+    </div>
+    <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+      <div class="mt" style="color:var(--orange);">🔍 OCR 扫描 <span class="badge badge-individual">独立</span></div>
+      <div class="md">文件上传 + OCR 结果显示</div>
+      <div class="mc">lazy: ocr/</div>
+    </div>
+    <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+      <div class="mt" style="color:var(--orange);">📁 文件管理 <span class="badge badge-individual">独立</span></div>
+      <div class="md">Blob 文件浏览、上传下载</div>
+      <div class="mc">lazy: files/</div>
+    </div>
+    <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+      <div class="mt" style="color:var(--orange);">⚙️ 系统设置 <span class="badge badge-individual">独立</span></div>
+      <div class="md">用户、角色、权限配置</div>
+      <div class="mc">lazy: settings/</div>
+    </div>
+    <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+      <div class="mt" style="color:var(--orange);">... 其他业务 <span class="badge badge-individual">独立</span></div>
+      <div class="md">按需添加新模块</div>
+      <div class="mc">lazy: {module}/</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BIG FLOW: FRONTEND → BACKEND ===== -->
+<div class="big-flow">
+  <div class="bf-title">⬇ Angular HttpClient → HTTP PUT/GET/POST/DELETE → IIS /api 子应用 → .NET 8 Kestrel ⬇</div>
+  <div class="bf-detail">
+    URL: http://localhost/api/{controller}/{action} | 格式: JSON | 认证: JWT / Windows Auth
+  </div>
+  <div class="bf-note">✅ 同源 (Same-Origin) → CORS 不要 → Cookie 自动发送 → Windows Auth 自动协商</div>
+</div>
+
+<!-- ===== .NET 8 BACKEND ===== -->
+<div class="zone" style="border-color:var(--blue-b);background:var(--blue-l);">
+  <div class="zone-label" style="background:var(--blue);">⚙️ .NET 8 Web API 后端 (Backend — IIS Sub-App /api)</div>
+  <div class="zone-sub">Pool_API | AspNetCoreModuleV2 → Kestrel in-process</div>
+
+  <!-- Middleware Pipeline -->
+  <div class="sec" style="margin-top:10px;"><div class="sec-dot" style="background:var(--purple);"></div><div class="sec-text">Middleware Pipeline (请求按顺序通过) <span class="badge badge-core">核心</span></div></div>
+  <div class="g6">
+    <div class="mod" style="border-color:var(--purple-b);background:var(--purple-l);">
+      <div class="mt" style="color:var(--purple);font-size:10px;">❶ ExceptionHandler</div>
+      <div class="md">全局异常捕获</div>
+    </div>
+    <div class="mod" style="border-color:var(--purple-b);background:var(--purple-l);">
+      <div class="mt" style="color:var(--purple);font-size:10px;">❷ Serilog</div>
+      <div class="md">请求日志记录</div>
+    </div>
+    <div class="mod" style="border-color:var(--purple-b);background:var(--purple-l);">
+      <div class="mt" style="color:var(--purple);font-size:10px;">❸ HTTPS Redirect</div>
+      <div class="md">HTTP → HTTPS</div>
+    </div>
+    <div class="mod" style="border-color:var(--purple-b);background:var(--purple-l);">
+      <div class="mt" style="color:var(--purple);font-size:10px;">❹ Authentication</div>
+      <div class="md">JWT / Win Auth 验证</div>
+    </div>
+    <div class="mod" style="border-color:var(--purple-b);background:var(--purple-l);">
+      <div class="mt" style="color:var(--purple);font-size:10px;">❺ Authorization</div>
+      <div class="md">角色 & 策略检查</div>
+    </div>
+    <div class="mod" style="border-color:var(--purple-b);background:var(--purple-l);">
+      <div class="mt" style="color:var(--purple);font-size:10px;">❻ MapControllers</div>
+      <div class="md">路由到 Controller</div>
+    </div>
+  </div>
+
+  <div class="pipe"><div class="pipe-line"></div><div class="pipe-text">Middleware 通过后 → Controller 层</div><div class="pipe-line"></div></div>
+
+  <!-- API Layer -->
+  <div class="sec"><div class="sec-dot" style="background:var(--blue);"></div><div class="sec-text">API Controller 层</div></div>
+  <div class="g2">
+    <div>
+      <div class="g3">
+        <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+          <div class="mt" style="color:var(--green);">BaseApiController <span class="badge badge-shared">共通</span></div>
+          <div class="md">Controller 基类<br>统一响应格式<br>分页参数处理</div>
+        </div>
+        <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+          <div class="mt" style="color:var(--green);">Model Binding <span class="badge badge-core">核心</span></div>
+          <div class="md">JSON → DTO 自动转换<br>[FromBody] [FromQuery]</div>
+        </div>
+        <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+          <div class="mt" style="color:var(--green);">FluentValidation <span class="badge badge-shared">共通</span></div>
+          <div class="md">DTO 输入验证<br>自动返回 400</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="g3">
+        <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+          <div class="mt" style="color:var(--orange);">EmployeesCtrl <span class="badge badge-individual">独立</span></div>
+          <div class="md">CRUD + 导出</div>
+        </div>
+        <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+          <div class="mt" style="color:var(--orange);">DepartmentsCtrl <span class="badge badge-individual">独立</span></div>
+          <div class="md">部门 CRUD</div>
+        </div>
+        <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+          <div class="mt" style="color:var(--orange);">AttendanceCtrl <span class="badge badge-individual">独立</span></div>
+          <div class="md">考勤 CRUD</div>
+        </div>
+        <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+          <div class="mt" style="color:var(--orange);">ReportsCtrl <span class="badge badge-individual">独立</span></div>
+          <div class="md">报表生成</div>
+        </div>
+        <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+          <div class="mt" style="color:var(--orange);">OcrCtrl <span class="badge badge-individual">独立</span></div>
+          <div class="md">OCR 处理</div>
+        </div>
+        <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);">
+          <div class="mt" style="color:var(--orange);">FilesCtrl <span class="badge badge-individual">独立</span></div>
+          <div class="md">文件上传下载</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pipe"><div class="pipe-line"></div><div class="pipe-text">Controller → Service 层 (DI 注入)</div><div class="pipe-line"></div></div>
+
+  <!-- Service Layer -->
+  <div class="sec"><div class="sec-dot" style="background:var(--teal);"></div><div class="sec-text">Service 层 (业务逻辑)</div></div>
+  <div class="g2">
+    <div>
+      <div class="sec" style="margin:0;"><div class="sec-dot" style="background:var(--green);width:6px;height:6px;"></div><div class="sec-text" style="font-size:9px;">共通 Service</div></div>
+      <div class="g3" style="gap:6px;">
+        <div class="mod" style="border-color:var(--green-b);background:var(--green-l);padding:6px 8px;">
+          <div class="mt" style="color:var(--green);font-size:10px;">AutoMapper <span class="badge badge-shared">共通</span></div>
+          <div class="md">Entity ↔ DTO 映射</div>
+        </div>
+        <div class="mod" style="border-color:var(--green-b);background:var(--green-l);padding:6px 8px;">
+          <div class="mt" style="color:var(--green);font-size:10px;">BlobService <span class="badge badge-shared">共通</span></div>
+          <div class="md">Azure Blob 读写</div>
+        </div>
+        <div class="mod" style="border-color:var(--green-b);background:var(--green-l);padding:6px 8px;">
+          <div class="mt" style="color:var(--green);font-size:10px;">EmailService <span class="badge badge-shared">共通</span></div>
+          <div class="md">SMTP 邮件发送</div>
+        </div>
+        <div class="mod" style="border-color:var(--green-b);background:var(--green-l);padding:6px 8px;">
+          <div class="mt" style="color:var(--green);font-size:10px;">ExcelService <span class="badge badge-shared">共通</span></div>
+          <div class="md">ClosedXML 报表</div>
+        </div>
+        <div class="mod" style="border-color:var(--green-b);background:var(--green-l);padding:6px 8px;">
+          <div class="mt" style="color:var(--green);font-size:10px;">PdfService <span class="badge badge-shared">共通</span></div>
+          <div class="md">QuestPDF 输出</div>
+        </div>
+        <div class="mod" style="border-color:var(--green-b);background:var(--green-l);padding:6px 8px;">
+          <div class="mt" style="color:var(--green);font-size:10px;">CurrentUser <span class="badge badge-shared">共通</span></div>
+          <div class="md">当前登录用户信息</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="sec" style="margin:0;"><div class="sec-dot" style="background:var(--yellow);width:6px;height:6px;"></div><div class="sec-text" style="font-size:9px;">业务 Service（每个模块独立一个）</div></div>
+      <div class="g3" style="gap:6px;">
+        <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);padding:6px 8px;">
+          <div class="mt" style="color:var(--orange);font-size:10px;">EmployeeService <span class="badge badge-individual">独立</span></div>
+          <div class="md">员工业务逻辑</div>
+        </div>
+        <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);padding:6px 8px;">
+          <div class="mt" style="color:var(--orange);font-size:10px;">DepartmentService <span class="badge badge-individual">独立</span></div>
+          <div class="md">部门业务逻辑</div>
+        </div>
+        <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);padding:6px 8px;">
+          <div class="mt" style="color:var(--orange);font-size:10px;">AttendanceService <span class="badge badge-individual">独立</span></div>
+          <div class="md">考勤业务逻辑</div>
+        </div>
+        <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);padding:6px 8px;">
+          <div class="mt" style="color:var(--orange);font-size:10px;">ReportService <span class="badge badge-individual">独立</span></div>
+          <div class="md">报表生成逻辑</div>
+        </div>
+        <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);padding:6px 8px;">
+          <div class="mt" style="color:var(--orange);font-size:10px;">OcrService <span class="badge badge-individual">独立</span></div>
+          <div class="md">Tesseract 调用</div>
+        </div>
+        <div class="mod" style="border-color:var(--yellow-b);background:var(--yellow-l);padding:6px 8px;">
+          <div class="mt" style="color:var(--orange);font-size:10px;">ExternalApiSvc <span class="badge badge-individual">独立</span></div>
+          <div class="md">外部 API + Polly</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pipe"><div class="pipe-line"></div><div class="pipe-text">Service → Data Access 层 (Repository / EF Core)</div><div class="pipe-line"></div></div>
+
+  <!-- Data Access Layer -->
+  <div class="sec"><div class="sec-dot" style="background:var(--cyan);"></div><div class="sec-text">Data Access 层 (数据访问)</div></div>
+  <div class="g4">
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">IRepository&lt;T&gt; <span class="badge badge-shared">共通</span></div>
+      <div class="md">泛型仓储接口<br>GetById / GetAll / Add / Update / Delete</div>
+      <div class="mc">所有 Entity 共用一套接口</div>
+    </div>
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">Repository&lt;T&gt; <span class="badge badge-shared">共通</span></div>
+      <div class="md">泛型仓储实现<br>EF Core 封装</div>
+      <div class="mc">基础 CRUD 不用写重复代码</div>
+    </div>
+    <div class="mod" style="border-color:var(--green-b);background:var(--green-l);">
+      <div class="mt" style="color:var(--green);">IUnitOfWork <span class="badge badge-shared">共通</span></div>
+      <div class="md">工作单元模式<br>事务统一管理</div>
+      <div class="mc">SaveChangesAsync() 集中提交</div>
+    </div>
+    <div class="mod" style="border-color:var(--cyan-b);background:var(--cyan-l);">
+      <div class="mt" style="color:var(--cyan);">AppDbContext <span class="badge badge-core">核心</span></div>
+      <div class="md">EF Core 8 DbContext<br>DbSet / 配置 / Migration</div>
+      <div class="mc">Code First + Fluent API</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DATA FLOW TO DB & SERVICES ===== -->
+<div class="flow">
+  <div class="flow-label" style="border-color:var(--teal-b);background:var(--teal-l);color:var(--teal);">⬇ EF Core → SqlClient → TCP 1433 → Azure SQL</div>
+  <div class="flow-label" style="border-color:var(--orange-b);background:var(--orange-l);color:var(--orange);">↕ Azure.Storage.Blobs SDK → Blob Storage</div>
+  <div class="flow-label" style="border-color:var(--purple-b);background:var(--purple-l);color:var(--purple);">↕ Key Vault SDK → 密钥读取</div>
+</div>
+
+<!-- ===== DATABASE & EXTERNAL ===== -->
+<div class="g2">
+  <div class="zone" style="border-color:var(--teal-b);background:var(--teal-l);">
+    <div class="zone-label" style="background:var(--teal);">💾 Azure SQL Database</div>
+    <div class="g2" style="margin-top:8px;">
+      <div class="mod" style="border-color:var(--teal-b);">
+        <div class="mt" style="color:var(--teal);">📊 GovSystemDB</div>
+        <div class="md">业务表: Employees, Departments,<br>Attendance, Files, Settings ...</div>
+        <div class="mc">EF Core 8 Code First Migration</div>
+      </div>
+      <div class="mod" style="border-color:var(--yellow-b);">
+        <div class="mt" style="color:var(--yellow);">📝 GovSystemLogDB</div>
+        <div class="md">Serilog 日志表<br>操作审计记录</div>
+        <div class="mc">Serilog.Sinks.MSSqlServer</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="zone" style="border-color:var(--orange-b);background:var(--orange-l);">
+    <div class="zone-label" style="background:var(--orange);">📦 Azure Blob Storage</div>
+    <div class="g2" style="margin-top:8px;">
+      <div class="mod" style="border-color:var(--orange-b);">
+        <div class="mt" style="color:var(--orange);">📂 文件容器</div>
+        <div class="md">uploads/ — 用户上传<br>ocr-files/ — OCR 源文件<br>ocr-results/ — OCR 结果</div>
+      </div>
+      <div class="mod" style="border-color:var(--orange-b);">
+        <div class="mt" style="color:var(--orange);">🔄 交换容器</div>
+        <div class="md">exchange/incoming/ — 接收<br>exchange/outgoing/ — 发送<br>backups/ — DB 备份</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DESIGN PATTERN SUMMARY ===== -->
+<div class="zone" style="border-color:var(--indigo-b);background:var(--indigo-l);margin-top:16px;">
+  <div class="zone-label" style="background:var(--indigo);">📐 设计原则总结 — 共通 vs 独立</div>
+  <div class="g2" style="margin-top:10px;">
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px;">🟢 设计为共通组件的原则</div>
+      <div class="mod" style="border-color:var(--green-b);background:#fff;">
+        <div class="md" style="line-height:2;">
+          <b>判断标准：</b>是否有 2 个以上模块会用到？<br>
+          <b>前端：</b>Interceptor (HTTP 拦截器)、Guard (路由守卫)、Base Component (列表/表单基类)、弹窗、上传组件、i18n<br>
+          <b>后端：</b>Repository&lt;T&gt; (泛型仓储)、UnitOfWork、AutoMapper Profile、FluentValidation 基类、BlobService、EmailService、报表 Service<br>
+          <b>优势：</b>写一次到处用。新增业务模块时，只需继承基类或注入共通 Service，不用重复造轮子
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:6px;">🟡 设计为独立组件的原则</div>
+      <div class="mod" style="border-color:var(--yellow-b);background:#fff;">
+        <div class="md" style="line-height:2;">
+          <b>判断标准：</b>是否包含特定业务逻辑？<br>
+          <b>前端：</b>每个业务模块的 Component、Service、DTO、路由配置。用 Lazy Load 隔离，改一个模块不影响其他<br>
+          <b>后端：</b>每个业务的 Controller、Service、Validator、DTO。各自封装业务规则，互不耦合<br>
+          <b>优势：</b>团队可以并行开发不同模块，互不冲突。新人只需学一个模块就能上手
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
