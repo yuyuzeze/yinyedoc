@@ -1,11 +1,11 @@
 # 农林水产省 Demo
 
-前后端分离 Demo 环境，基于 Angular 18 + .NET 8 Web API + EF Core + SQLite。
+前后端分离环境，基于 Angular 20 + .NET 10 Web API + EF Core + Azure SQL。
 
 ## 环境要求
 
-- **Node.js** 18+（推荐 20 LTS）
-- **.NET SDK** 8.0
+- **Node.js** 20+（推荐 20 LTS）
+- **.NET SDK** 10.0
 - 本地无需安装 SQL Server，Demo 使用 SQLite 单文件数据库
 
 ## 项目结构
@@ -18,7 +18,7 @@
 │   │   ├── Domain/          # 领域实体
 │   │   └── Infrastructure/  # EF Core、DbContext、Repository
 │   └── Nogyosuisan.sln
-├── frontend/                # Angular 18 SPA
+├── frontend/                # Angular 20 SPA
 │   ├── src/app/
 │   │   ├── core/            # 模型、服务
 │   │   └── features/        # 功能模块（Demo 列表与表单）
@@ -63,8 +63,8 @@ ng serve
 
 ## 数据库
 
-- **Demo 默认**：SQLite，连接字符串 `Data Source=nogyosuisan.db`
-- 如需改用 **SQL Server LocalDB**，在 `backend/src/Api/appsettings.Development.json` 中修改：
+- **本番環境**：Azure SQL Database（Managed Identity 経由で接続）
+- **ローカル開発**：SQL Server LocalDB を使用。`backend/src/Api/appsettings.Development.json` で接続先を切り替える：
 
 ```json
 "ConnectionStrings": {
@@ -72,15 +72,15 @@ ng serve
 }
 ```
 
-并在 Infrastructure 项目中引用 `Microsoft.EntityFrameworkCore.SqlServer`，在 Api 的 `Program.cs` 中改用 `UseSqlServer(connectionString)`。
+本番環境では `appsettings.prod.json` に Azure SQL の Managed Identity 接続文字列を設定し、Infrastructure 項目で `Microsoft.EntityFrameworkCore.SqlServer`（EF Core 10）を使用する。
 
 ## 技术栈
 
 | 层       | 技术 |
 |----------|------|
-| 前端     | Angular 18（Standalone）、TypeScript、SCSS |
-| 后端     | .NET 8 Web API、C# |
-| ORM/数据 | EF Core 8、SQLite（可换 LocalDB） |
+| 前端     | Angular 20（Standalone）、TypeScript、SCSS |
+| 后端     | .NET 10 Web API、C# |
+| ORM/数据 | EF Core 10、Azure SQL Database（ローカル開発は LocalDB） |
 | 文档     | Swagger/OpenAPI |
 
 按上述步骤即可在本地完整运行并联调前后端 Demo。

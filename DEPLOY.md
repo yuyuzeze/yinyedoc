@@ -1,49 +1,171 @@
-# 前端部署到 Azure Static Web App
+# 本番環境デプロイ手順（Azure VM + IIS 方式）
 
-## 已做的改动
+本システムは Angular 20（フロントエンド）と .NET 10 Web API（バックエンド）を同一の Azure VM 上の IIS に配置する構成を採用する。  
+Azure Static Web App は使用しない。
 
-- **`.github/workflows/azure-static-web-apps-frontend.yml`**  
-  仅针对 `frontend/` 的 push/PR 触发，构建 Angular 并部署到 Azure Static Web App。  
-  - `app_location`: `frontend`  
-  - `output_location`: `dist/frontend`  
-  - 未配置 `api_location`，只部署静态前端。
+---
 
-## 你需要完成的步骤
+## デプロイ構成
 
-1. **把代码推到 GitHub**
-   - 在 GitHub 新建仓库（或使用现有仓库）。
-   - 本地添加 remote 并 push（包含 `frontend` 和 `.github/workflows`）。
+```
+Azure VM（Windows Server 2022）
+└── IIS 10 — Website: system.gov.local
+    ├── / (Root)     → Angular 20 SPA（静的ファイル）   Pool_Frontend
+    └── /api         → .NET 10 Web API（サブアプリ）    Pool_API（Kestrel in-process）
+```
 
-2. **在 Azure 创建 Static Web App 并连接 GitHub**
-   - 打开 [Azure Portal](https://portal.azure.com) → 创建资源 → **Static Web App**。
-   - 在「部署」步骤中：
-     - 选择 **GitHub**，授权并选择本仓库、分支（如 `main`）。
-     - 若 Azure 自动生成 workflow，可先跳过或删除，使用本仓库已有的 `azure-static-web-apps-frontend.yml`。
-   - 创建完成后，在 Static Web App 的 **概览** 或 **管理部署令牌** 中复制 **部署令牌**。
+---
 
-3. **在 GitHub 仓库中配置 Secret**
-   - 仓库 → **Settings** → **Secrets and variables** → **Actions**。
-   - 新建 Secret，名称：`AZURE_STATIC_WEB_APPS_API_TOKEN`，值：上一步复制的部署令牌。
+## 1. 事前準備（VM サーバー側）
 
-4. **触发部署**
-   - 对 `frontend/` 做一次提交并 push 到 `main`（或 `master`），或合并到该分支的 PR，即可触发 workflow 并部署。
+1. **ASP.NET Core Hosting Bundle（.NET 10）のインストール**
+   - 下載：https://dotnet.microsoft.com/download/dotnet → バージョン 10 → Hosting Bundle
+   - インストール後、IIS を再起動する：
+     ```powershell
+     iisreset
+     ```
 
-## 本地调试是否受影响？
+2. **IIS URL Rewrite モジュール（バージョン 2.1）のインストール**
+   - Angular SPA のクライアントサイドルーティングに必要
+   - 下載：https://www.iis.net/downloads/microsoft/url-rewrite
 
-**不受影响。**
+3. **IIS で AspNetCoreModuleV2 が有効になっているか確認する**
 
-- 工作流只在 **GitHub 上** 在 push/PR 时运行，不会改你本机环境。
-- 本地仍然在 `frontend` 目录执行：
-  - `npm install`
-  - `npm start`（或 `ng serve`）
-- `proxy.conf.json` 继续把 `/api` 转到 `http://localhost:5001`，本地调试方式不变。
-- 只有部署到 Azure 后，线上环境的 `/api` 需要单独配置（例如后端部署到 Azure App Service 或其它地址，再在 Static Web App 里配置代理或环境变量）。
+---
 
-## 生产环境 API 地址（可选）
+## 2. ビルド & 発布
 
-当前前端使用相对路径 `/api`。若后端部署在别的主机（例如 Azure App Service），需要：
+### 2.1 手動手順
 
-- 在 `frontend/src/environments/` 为 production 使用单独配置（如 `environment.prod.ts`），或在构建时通过 Angular 的 `fileReplacements` 注入生产 API 根地址；
-- 或在 Azure Static Web App 的 `staticwebapp.config.json` 中配置代理，把 `/api` 转发到你的后端 URL。
+```powershell
+# ステップ1：Angular フロントエンドをビルド
+cd frontend
+npm install
+ng build --configuration production
 
-如需，我可以根据你当前 `environment` 结构写出具体配置示例。
+# ステップ2：.NET 10 Web API を発布
+cd ..\backend\src\Api
+dotnet publish -c Release -o ..\..\..\publish
+
+# ステップ3：Angular ビルド産物を publish/wwwroot にコピー
+#   Angular 20 のビルド産物は frontend/dist/frontend/browser/ 配下
+New-Item -ItemType Directory -Force ..\..\..\publish\wwwroot
+Copy-Item ..\..\..\..\frontend\dist\frontend\browser\* ..\..\..\publish\wwwroot\ -Recurse -Force
+```
+
+### 2.2 一键スクリプト
+
+プロジェクトルートに `publish.ps1` が用意されている：
+
+```powershell
+cd D:\Code\Backend\C#\农林水产省
+.\publish.ps1
+```
+
+実行後、`publish/` ディレクトリが完全なデプロイパッケージとなる。
+
+---
+
+## 3. IIS へのデプロイ
+
+1. `publish/` ディレクトリ全体をサーバーにコピーする（例：`C:\inetpub\govsystem\`）
+2. IIS マネージャーでサイトを追加する：
+   - サイト名：`GovSystem`
+   - 物理パス：`C:\inetpub\govsystem\`
+   - ポート：`443`（HTTPS）
+   - アプリケーションプール：**マネージドコードなし**（ASP.NET Core は自身のランタイムを管理）
+3. サブアプリケーション `/api` を追加する：
+   - 物理パス：`C:\inetpub\govsystem\`（同ディレクトリ）
+   - アプリケーションプール：`Pool_API`（マネージドコードなし）
+4. アプリケーションプールの ID にデプロイディレクトリへの**読み書き権限**を付与する（Azure SQL Managed Identity 接続のため）
+
+---
+
+## 4. IIS web.config の確認
+
+`dotnet publish` 実行時に `web.config` が自動生成される。内容は以下のとおり：
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore" path="*" verb="*"
+             modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <aspNetCore processPath="dotnet" arguments=".\Api.dll"
+                  stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout"
+                  hostingModel="inprocess" />
+    </system.webServer>
+  </location>
+</configuration>
+```
+
+問題発生時はログ確認のため `stdoutLogEnabled` を `true` に変更し、`logs` フォルダを作成する。
+
+---
+
+## 5. Angular SPA ルーティング対応（URL Rewrite）
+
+Angular のクライアントサイドルーティングに対応するため、`wwwroot/` に `web.config` を配置する：
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <system.webServer>
+    <rewrite>
+      <rules>
+        <rule name="Angular Routes" stopProcessing="true">
+          <match url=".*" />
+          <conditions logicalGrouping="MatchAll">
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+            <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+            <add input="{REQUEST_URI}" pattern="^/api" negate="true" />
+          </conditions>
+          <action type="Rewrite" url="/index.html" />
+        </rule>
+      </rules>
+    </rewrite>
+  </system.webServer>
+</configuration>
+```
+
+---
+
+## 6. データベース設定（Azure SQL Database）
+
+本番環境は Azure SQL Database に Managed Identity で接続する。`appsettings.prod.json` を確認する：
+
+```json
+{
+  "ConnectionStrings": {
+    "AppDB": "Server=tcp:appdb.database.windows.net,1433;Initial Catalog=AppDB;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Managed Identity;"
+  }
+}
+```
+
+パスワードは不要。Azure VM の Managed Identity に Azure SQL への権限を付与すること。
+
+---
+
+## 7. デプロイ後の検証
+
+```powershell
+# 発布パッケージを単体で起動して確認する
+cd publish
+dotnet Api.dll
+```
+
+- `https://system.gov.local` → Angular 20 SPA のフロントエンド画面
+- `https://system.gov.local/api/swagger` → Swagger UI（API テスト）
+
+---
+
+## 8. ローカル開発への影響
+
+**影響なし。**
+
+- ローカル開発時は `frontend/` で `ng serve`（Port 4200）、`backend/src/Api` で `dotnet run`（Port 5001）をそれぞれ起動する。
+- `proxy.conf.json` により `/api` → `http://localhost:5001` に転送されるため、CORS 設定不要。
+- 本デプロイ手順は Azure VM 上の IIS へのデプロイにのみ適用される。

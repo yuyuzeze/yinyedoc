@@ -20,7 +20,7 @@ npm --version     # 应输出 10.x.x 或 9.x.x
 Node.js 安装完后，打开命令行执行：
 
 ```powershell
-npm install -g @angular/cli@18
+npm install -g @angular/cli@20
 ```
 
 安装后验证：
@@ -29,7 +29,7 @@ npm install -g @angular/cli@18
 ng version
 ```
 
-应显示 Angular CLI 18.x.x。
+应显示 Angular CLI 20.x.x。
 
 > **注意**：如果公司网络有代理，可能需要配置 npm 代理：
 > ```powershell
@@ -40,14 +40,14 @@ ng version
 ### 1.3 安装 .NET SDK
 
 - 下载地址：https://dotnet.microsoft.com/download
-- 推荐版本：**.NET 8.0 SDK**（LTS 长期支持版）
+- 推荐版本：**.NET 10.0 SDK**（LTS 长期支持版）
 - 安装后验证：
 
 ```powershell
-dotnet --version   # 应输出 8.0.x
+dotnet --version   # 应输出 10.0.x
 ```
 
-本 Demo 使用 **.NET 8.0** 与 **Angular 18** 构建。
+本系统使用 **.NET 10.0** 与 **Angular 20** 构建。
 
 ### 1.4 安装 Visual Studio 2022（后端开发用）
 
@@ -79,7 +79,7 @@ dotnet --version   # 应输出 8.0.x
    - 项目名称：`Api`
    - 位置：`D:\Code\Backend\C#\农林水产省\backend\src\`
    - 解决方案名称：`Nogyosuisan`
-4. 框架选 **.NET 8.0 (Long Term Support)**
+4. 框架选 **.NET 10.0 (Long Term Support)**
 5. 勾选：
    - ✅ Configure for HTTPS（可选，开发阶段可以不勾）
    - ✅ Use controllers
@@ -106,14 +106,14 @@ dotnet --version   # 应输出 8.0.x
 │       ├── Api/                    # Web API 入口
 │       │   ├── Controllers/        #   DemoItemsController.cs
 │       │   ├── Properties/         #   launchSettings.json
-│       │   ├── wwwroot/            #   前端构建产物放这里（部署时）
+│       │   ├── wwwroot/            #   Angular 20 前端构建产物放这里（部署时）
 │       │   ├── Program.cs          #   启动配置
 │       │   ├── appsettings.json
 │       │   └── Api.csproj
 │       ├── Application/            # 应用层（DTO、服务接口/实现）
 │       ├── Domain/                 # 领域层（实体）
 │       └── Infrastructure/         # 基础设施（EF Core、Repository）
-├── frontend/                       # Angular 18 前端
+├── frontend/                       # Angular 20 前端
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── core/               # models、services
@@ -276,20 +276,20 @@ dotnet Api.dll
 ```
 
 同时需要：
-1. Infrastructure 项目引用 `Microsoft.EntityFrameworkCore.SqlServer`
+1. Infrastructure 项目引用 `Microsoft.EntityFrameworkCore.SqlServer`（EF Core 10）
 2. Program.cs 中 `UseSqlite` 改为 `UseSqlServer`
 
 ---
 
 ## 七、当前版本与后续升级说明
 
-本 Demo 已使用 **.NET 8.0** 与 **Angular 18**。若日后需要升级（例如到 .NET 9 或 Angular 19），可参考以下步骤。
+本系统使用 **.NET 10.0** 与 **Angular 20**。若日后需要升级（例如到 .NET 11 或 Angular 21），可参考以下步骤。
 
-### 7.1 升级 .NET（例如 net8.0 → net9.0）
+### 7.1 升级 .NET（例如 net10.0 → net11.0）
 
-将每个项目的 `<TargetFramework>` 改为目标版本（如 `net9.0`），并升级对应 NuGet 包版本（如 EF Core 9.0.x、AspNetCore 9.0.x）。
+将每个项目的 `<TargetFramework>` 改为目标版本（如 `net11.0`），并升级对应 NuGet 包版本（如 EF Core 11.0.x、AspNetCore 11.0.x）。
 
-### 7.2 升级 Angular（例如 18 → 19）
+### 7.2 升级 Angular（例如 20 → 21）
 
 修改 `frontend/package.json` 中所有 `@angular/*` 与 `@angular-devkit/build-angular`、`@angular/cli`、`@angular/compiler-cli` 的版本号，然后删除 `frontend/node_modules` 文件夹，再执行：
 

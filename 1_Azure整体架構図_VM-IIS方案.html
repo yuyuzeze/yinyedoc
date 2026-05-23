@@ -96,7 +96,7 @@ body{background:var(--bg);font-family:'Noto Sans SC',sans-serif;color:var(--text
 
 <div class="hdr">
   <h1>Azure 整体基础架构图</h1>
-  <div class="sub">VM + IIS 方案 — Angular 18 + .NET 8 + Azure SQL + Blob Storage | 政府内部系统</div>
+  <div class="sub">VM + IIS 方案 — Angular 20 + .NET 10 + Azure SQL + Blob Storage | 政府内部系统</div>
 </div>
 
 <!-- Legend -->
@@ -236,12 +236,12 @@ body{background:var(--bg);font-family:'Noto Sans SC',sans-serif;color:var(--text
                 <div class="zone-label" style="background:var(--blue);color:#fff;font-size:9px;">IIS 10 — Website: system.gov.local</div>
                 <div class="g2" style="margin-top:8px;gap:8px;">
                   <div class="svc" style="background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2);">
-                    <div class="name" style="color:#f87171;">📁 / (Root) — Angular 18</div>
+                    <div class="name" style="color:#f87171;">📁 / (Root) — Angular 20</div>
                     <div class="desc">前端 SPA 静态文件</div>
                     <div class="spec">Pool_Frontend | No Managed Code</div>
                   </div>
                   <div class="svc" style="background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.2);">
-                    <div class="name" style="color:#60a5fa;">⚙️ /api — .NET 8 API</div>
+                    <div class="name" style="color:#60a5fa;">⚙️ /api — .NET 10 API</div>
                     <div class="desc">后端 Web API (子应用)</div>
                     <div class="spec">Pool_API | Kestrel in-process</div>
                   </div>
@@ -281,16 +281,11 @@ body{background:var(--bg);font-family:'Noto Sans SC',sans-serif;color:var(--text
             <div class="name" style="color:var(--teal);font-size:13px;">Azure SQL Database</div>
             <div class="spec">Standard S1 (20 DTU) | ~$30/月 | 自動バックアップ</div>
             <div style="margin-top:8px;">
-              <div class="g2" style="gap:6px;">
+              <div style="gap:6px;">
                 <div class="svc" style="padding:6px 8px;background:rgba(20,184,166,.06);border-color:rgba(20,184,166,.2);">
                   <div class="name" style="font-size:10px;color:var(--teal);">📊 GovSystemDB</div>
                   <div class="desc">业务数据库<br>员工、部门、业务表</div>
-                  <div class="spec">EF Core 8 + Dapper</div>
-                </div>
-                <div class="svc" style="padding:6px 8px;background:rgba(234,179,8,.06);border-color:rgba(234,179,8,.2);">
-                  <div class="name" style="font-size:10px;color:var(--yellow);">📝 GovSystemLogDB</div>
-                  <div class="desc">日志数据库<br>Serilog 操作记录</div>
-                  <div class="spec">Serilog.Sinks.MSSqlServer</div>
+                  <div class="spec">EF Core 10 + Dapper</div>
                 </div>
               </div>
               <div class="svc" style="margin-top:6px;padding:6px 8px;">
@@ -357,6 +352,11 @@ body{background:var(--bg);font-family:'Noto Sans SC',sans-serif;color:var(--text
           <div class="name" style="color:var(--yellow);font-size:11px;">📈 Azure Monitor</div>
           <div class="desc">CPU / 内存 / 磁盘监控</div>
           <div class="spec">Alert Rules | 阈值通知</div>
+        </div>
+        <div class="svc" style="margin-bottom:6px;padding:8px;">
+          <div class="name" style="color:var(--yellow);font-size:10px;">📋 Log Analytics Workspace</div>
+          <div class="desc">アプリログ集約・KQL 検索<br>AMA → 自動転送 | 90日保持</div>
+          <div class="spec">Serilog File → AMA → Log Analytics</div>
         </div>
         <div class="svc" style="padding:8px;">
           <div class="name" style="color:var(--yellow);font-size:10px;">📋 Activity Log</div>
